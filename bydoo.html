@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Front Desk Triage Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #12161d;
+        --panel: #1a2029;
+        --panel-2: #212836;
+        --line: #2a3140;
+        --text: #e8ecf1;
+        --text-dim: #8b94a3;
+        --teal: #4fd1c5;
+        --amber: #f5a623;
+        --coral: #ef5b5b;
+        --radius: 10px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        min-height: 100vh;
+        padding: 32px 24px 80px;
+      }
+      .wrap {
+        max-width: 920px;
+        margin: 0 auto;
+      }
+      header {
+        margin-bottom: 28px;
+      }
+      .eyebrow {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--teal);
+        margin: 0 0 8px;
+      }
+      h1 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 6px;
+      }
+      .sub {
+        color: var(--text-dim);
+        font-size: 14px;
+        margin: 0;
+        line-height: 1.6;
+        max-width: 640px;
+      }
+
+      .resources {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 28px 0;
+      }
+      .res-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+      }
+      .res-label {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin: 0 0 6px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .res-value {
+        font-size: 30px;
+        font-weight: 600;
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+      }
+      .res-value.low {
+        color: var(--coral);
+      }
+
+      .section-title {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin: 32px 0 12px;
+      }
+
+      .new-request {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+      }
+      .new-request textarea {
+        width: 100%;
+        min-height: 64px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        font-size: 14px;
+        padding: 10px 12px;
+        resize: vertical;
+      }
+      .new-request textarea:focus {
+        outline: none;
+        border-color: var(--teal);
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .row label {
+        font-size: 12.5px;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+      .row input[type="checkbox"] {
+        accent-color: var(--teal);
+      }
+
+      .queue {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        cursor: pointer;
+        transition:
+          border-color 0.15s ease,
+          background 0.15s ease;
+      }
+      .card:hover {
+        border-color: #3a4356;
+      }
+      .card.selected {
+        border-color: var(--teal);
+        background: var(--panel-2);
+      }
+      .card.done {
+        opacity: 0.5;
+      }
+      .rank {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        color: var(--text-dim);
+        width: 20px;
+        flex-shrink: 0;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .dot.ai {
+        background: var(--teal);
+      }
+      .dot.staff {
+        background: var(--amber);
+      }
+      .dot.parallel {
+        background: var(--coral);
+      }
+      .card-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .card-track {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin: 2px 0 0;
+      }
+      .check {
+        color: var(--text-dim);
+        font-size: 18px;
+      }
+
+      .detail {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 20px 22px;
+        margin-top: 14px;
+      }
+      .badge {
+        display: inline-block;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.03em;
+        padding: 3px 9px;
+        border-radius: 5px;
+        margin-bottom: 14px;
+      }
+      .badge.rules {
+        background: #1c3d3a;
+        color: var(--teal);
+      }
+      .badge.fallback {
+        background: #453317;
+        color: var(--amber);
+      }
+      .detail-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin: 0 0 6px;
+      }
+      .detail-label:not(:first-child) {
+        margin-top: 18px;
+      }
+      .detail-text {
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0;
+      }
+      .response-box {
+        background: var(--panel-2);
+        border-left: 3px solid var(--teal);
+        border-radius: 0 6px 6px 0;
+        padding: 12px 14px;
+        font-size: 14px;
+        line-height: 1.6;
+        font-style: italic;
+        color: #cfd6e0;
+      }
+      .score-row {
+        display: flex;
+        gap: 16px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+      .score-item {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+      .score-item b {
+        color: var(--text);
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      button {
+        font-family: "Inter", sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--panel-2);
+        color: var(--text);
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          opacity 0.15s ease;
+      }
+      button:hover:not(:disabled) {
+        background: #2a3140;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      button.primary {
+        background: var(--teal);
+        color: #0a1a18;
+        border-color: var(--teal);
+      }
+      button.primary:hover:not(:disabled) {
+        background: #63dccf;
+      }
+
+      .log {
+        margin-top: 32px;
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+      .log-entry {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12.5px;
+        color: var(--text-dim);
+        padding: 5px 0;
+        display: flex;
+        gap: 10px;
+      }
+      .log-entry .t {
+        color: #5a6478;
+        flex-shrink: 0;
+      }
+      .empty-log {
+        color: var(--text-dim);
+        font-size: 13px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .note {
+        margin-top: 32px;
+        font-size: 12.5px;
+        color: var(--text-dim);
+        line-height: 1.6;
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+      .note code {
+        background: var(--panel-2);
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+      }
+
+      .reset-row {
+        margin-top: 24px;
+        text-align: right;
+      }
+      .reset-row button {
+        font-size: 12px;
+        padding: 8px 14px;
+        color: var(--text-dim);
+      }
+
+      @media (max-width: 520px) {
+        .resources {
+          grid-template-columns: 1fr 1fr;
+        }
+        h1 {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <p class="eyebrow">Decision support prototype</p>
+        <h1>Front desk triage console</h1>
+        <p class="sub">
+          A rules engine scores every request on financial risk, reputation
+          risk, and complexity to decide: AI resolves it, staff handles it, or
+          both work it in parallel. Requests the rules can't confidently place
+          fall back to a secondary classifier.
+        </p>
+      </header>
+
+      <div class="resources">
+        <div class="res-card">
+          <p class="res-label">STAFF AVAILABLE</p>
+          <p class="res-value" id="staffVal">2</p>
+        </div>
+        <div class="res-card">
+          <p class="res-label">SLOTS LEFT TODAY</p>
+          <p class="res-value" id="slotsVal">3</p>
+        </div>
+      </div>
+
+      <p class="section-title">Submit a new request</p>
+      <div class="new-request">
+        <textarea
+          id="newReqText"
+          placeholder="e.g. Customer says the app crashed and lost their booking, wants it fixed now"
+        ></textarea>
+        <div class="row">
+          <label><input type="checkbox" id="tagVIP" /> VIP customer</label>
+          <label
+            ><input type="checkbox" id="tagMoney" /> Involves a charge or
+            refund</label
+          >
+          <label
+            ><input type="checkbox" id="tagBooking" /> Booking request</label
+          >
+        </div>
+        <div class="actions">
+          <button class="primary" id="classifyBtn">Classify request</button>
+        </div>
+      </div>
+
+      <p class="section-title">Request queue, ranked by priority</p>
+      <div class="queue" id="queue"></div>
+
+      <p class="section-title">Decision detail</p>
+      <div class="detail" id="detail"></div>
+
+      <div class="log">
+        <p class="section-title" style="margin-top: 0">Activity log</p>
+        <div id="logList"><p class="empty-log">No actions taken yet.</p></div>
+      </div>
+
+      <p class="note">
+        Classifications from the rules engine are computed live in this file
+        (see <code>classifyByRules()</code>). Requests the rules can't
+        confidently place fall back to <code>classifyByFallback()</code>,
+        labeled "AI fallback" in the queue. That function is a simulated
+        stand-in — a static HTML file can't safely hold an API key, so a real
+        deployment would replace it with a call to a backend endpoint that talks
+        to an LLM on the server side.
+      </p>
+
+      <div class="reset-row">
+        <button id="resetBtn">Reset console</button>
+      </div>
+    </div>
+
+    <script>
+      /* ---------- Seed data: the 5 requests from the original scenario ---------- */
+      let requests = [
+        {
+          id: "r1",
+          title: "Angry customer — charged twice",
+          source: "seed",
+          track: "parallel",
+          trackLabel: "AI + manager, in parallel",
+          method: "rules",
+          action:
+            "AI verifies the duplicate charge in the payment system, flags the manager for urgent refund approval, and sends the customer an immediate acknowledgment — all at once.",
+          response:
+            "We've confirmed you were charged twice for the same booking. This is already with our manager for urgent refund approval, and you'll see the reversal on your statement shortly.",
+          reasoning:
+            "Money and trust are both at risk. Running AI verification and manager approval in parallel resolves it faster than waiting for a human to spot it first.",
+          scores: { financial: 90, reputation: 40, complexity: 30 },
+          priority: 98,
+          uses: { staff: 1, slots: 0 },
+        },
+        {
+          id: "r2",
+          title: "Urgent issue, threatens bad review",
+          source: "seed",
+          track: "staff",
+          trackLabel: "Escalate to staff",
+          method: "rules",
+          action:
+            "Assign to the second available staff member immediately, ahead of routine requests.",
+          response:
+            "I'm connecting you with our team right now so we can resolve this for you urgently.",
+          reasoning:
+            "Reputational risk and emotional tone call for human judgment, not a scripted reply.",
+          scores: { financial: 10, reputation: 85, complexity: 50 },
+          priority: 85,
+          uses: { staff: 1, slots: 0 },
+        },
+        {
+          id: "r3",
+          title: "VIP customer wants to cancel",
+          source: "seed",
+          track: "ai",
+          trackLabel: "AI resolves",
+          method: "rules",
+          action:
+            "Check the VIP list, confirm identity, cancel the booking, and release the slot.",
+          response:
+            "Your cancellation is confirmed. We'd love to have you back — let us know if you'd like to rebook.",
+          reasoning:
+            "A well-defined, low-risk action. VIP status means it should be handled promptly, but it does not require a human decision.",
+          scores: { financial: 5, reputation: 20, complexity: 10 },
+          priority: 55,
+          uses: { staff: 0, slots: 0 },
+        },
+        {
+          id: "r4",
+          title: "New customer, book earliest slot",
+          source: "seed",
+          track: "ai",
+          trackLabel: "AI resolves",
+          method: "rules",
+          action:
+            "Auto-book the earliest of the remaining slots and send a confirmation.",
+          response:
+            "You're booked for the earliest available slot today — confirmation sent.",
+          reasoning:
+            "Time-sensitive since slots are limited, but it needs no judgment call, so AI handles it instantly.",
+          scores: { financial: 5, reputation: 5, complexity: 5 },
+          priority: 40,
+          uses: { staff: 0, slots: 1 },
+        },
+        {
+          id: "r5",
+          title: "Simple pricing question",
+          source: "seed",
+          track: "ai",
+          trackLabel: "AI resolves",
+          method: "rules",
+          action: "Answer directly from the knowledge base.",
+          response: "Here's our pricing: [pulled from knowledge base].",
+          reasoning:
+            "Lowest risk, lowest effort. An instant knowledge-base lookup that costs no staff time at all.",
+          scores: { financial: 0, reputation: 0, complexity: 5 },
+          priority: 20,
+          uses: { staff: 0, slots: 0 },
+        },
+      ]
+
+      const state = {
+        staff: 2,
+        slots: 3,
+        resolved: {},
+        selected: "r1",
+        log: [],
+      }
+      let nextId = 6
+
+      /* ---------- Decision engine ---------- */
+      /* Rules engine: keyword and tag based scoring. Returns null if no rule is confident enough,
+   which triggers the fallback classifier below. */
+      function classifyByRules(text, tags) {
+        const t = text.toLowerCase()
+        let financial = 0,
+          reputation = 0,
+          complexity = 20
+
+        if (
+          tags.money ||
+          /charge|refund|billed|payment|overcharge|double.?charg/.test(t)
+        )
+          financial += 70
+        if (/twice|duplicate|again/.test(t)) financial += 20
+        if (/urgent|now|immediately|asap/.test(t)) reputation += 40
+        if (/review|complain|angry|furious|frustrated|escalate/.test(t))
+          reputation += 40
+        if (tags.vip) complexity += 10
+        if (tags.booking || /book|slot|appointment|schedule/.test(t))
+          complexity += 5
+        if (/price|cost|how much|fee/.test(t)) complexity -= 10
+        if (/cancel/.test(t)) complexity -= 5
+
+        financial = Math.min(100, Math.max(0, financial))
+        reputation = Math.min(100, Math.max(0, reputation))
+        complexity = Math.min(100, Math.max(0, complexity))
+
+        const confident =
+          financial >= 60 || reputation >= 60 || financial + reputation < 15
+        if (!confident) return null
+
+        let track, trackLabel, action, response, reasoning, uses
+        const priority = Math.round(
+          financial * 0.5 + reputation * 0.4 + complexity * 0.1
+        )
+
+        if (financial >= 60 && reputation >= 30) {
+          track = "parallel"
+          trackLabel = "AI + manager, in parallel"
+          action =
+            "AI verifies the transaction and flags a manager for approval while acknowledging the customer immediately."
+          response =
+            "We've flagged this for urgent review and a manager is already on it — you'll hear back shortly."
+          reasoning = `Financial risk scored ${financial}/100 and reputation risk ${reputation}/100 — both high enough to need money moved and a human in the loop at the same time.`
+          uses = { staff: 1, slots: 0 }
+        } else if (reputation >= 60) {
+          track = "staff"
+          trackLabel = "Escalate to staff"
+          action =
+            "Assign to the next available staff member ahead of routine requests."
+          response =
+            "I'm connecting you with our team right now to get this resolved."
+          reasoning = `Reputation risk scored ${reputation}/100, which calls for human judgment rather than a scripted response.`
+          uses = { staff: 1, slots: 0 }
+        } else if (tags.vip) {
+          track = "ai"
+          trackLabel = "AI resolves"
+          action =
+            "Check the VIP list, confirm identity, and complete the request directly."
+          response =
+            "Done — you're all set. Let us know if there's anything else we can help with."
+          reasoning = `Low financial (${financial}) and reputation (${reputation}) risk. VIP status means it should still move promptly, but AI can complete it without a human.`
+          uses = { staff: 0, slots: tags.booking ? 1 : 0 }
+        } else {
+          track = "ai"
+          trackLabel = "AI resolves"
+          action = tags.booking
+            ? "Auto-book from the remaining slots and confirm."
+            : "Answer directly from the knowledge base."
+          response = tags.booking
+            ? "You're booked — confirmation sent."
+            : "Here's the answer from our knowledge base."
+          reasoning = `Financial risk ${financial}/100 and reputation risk ${reputation}/100 are both low, so this is safe for AI to resolve on its own.`
+          uses = { staff: 0, slots: tags.booking ? 1 : 0 }
+        }
+
+        return {
+          track,
+          trackLabel,
+          action,
+          response,
+          reasoning,
+          uses,
+          scores: { financial, reputation, complexity },
+          priority,
+          method: "rules",
+        }
+      }
+
+      /* AI fallback: simulated here because a static HTML file can't hold an API key safely.
+   In production, replace the body of this function with a fetch() to your own backend
+   endpoint, which then calls an LLM with the request text and returns the same shape
+   of object this function returns. */
+      function classifyByFallback(text, tags) {
+        const t = text.toLowerCase()
+        const wordCount = t.split(/\s+/).length
+        const urgencyHint = /\?|help|please|stuck|confus/.test(t)
+        const financial = /pay|cost|money|fee/.test(t) ? 40 : 15
+        const reputation = urgencyHint ? 35 : 15
+        const complexity = Math.min(80, 30 + wordCount * 2)
+        const priority = Math.round(
+          financial * 0.4 + reputation * 0.3 + complexity * 0.3
+        )
+
+        return {
+          track: "staff",
+          trackLabel: "Escalate to staff (unclear case)",
+          action:
+            "The rules engine could not confidently classify this one, so it is routed to staff for a human read rather than guessed at.",
+          response:
+            "Thanks for reaching out — a team member is reviewing your message and will get back to you shortly.",
+          reasoning: `No rule matched confidently (financial ${financial}, reputation ${reputation}). Ambiguous cases default to a human rather than letting AI guess on something unscored.`,
+          uses: { staff: 1, slots: 0 },
+          scores: { financial, reputation, complexity },
+          priority,
+          method: "fallback",
+        }
+      }
+
+      function classifyRequest(text, tags) {
+        const ruleResult = classifyByRules(text, tags)
+        if (ruleResult) return ruleResult
+        return classifyByFallback(text, tags)
+      }
+
+      /* ---------- Rendering ---------- */
+      function trackDotClass(track) {
+        return track === "ai" ? "ai" : track === "staff" ? "staff" : "parallel"
+      }
+      function timestamp() {
+        const d = new Date()
+        return d.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      }
+
+      function renderResources() {
+        document.getElementById("staffVal").textContent = state.staff
+        document.getElementById("slotsVal").textContent = state.slots
+        document.getElementById("staffVal").className =
+          "res-value" + (state.staff === 0 ? " low" : "")
+        document.getElementById("slotsVal").className =
+          "res-value" + (state.slots === 0 ? " low" : "")
+      }
+
+      function renderQueue() {
+        const q = document.getElementById("queue")
+        const sorted = [...requests].sort((a, b) => b.priority - a.priority)
+        q.innerHTML = sorted
+          .map((r, i) => {
+            const done = state.resolved[r.id]
+            const selected = state.selected === r.id
+            return `
+      <div class="card${selected ? " selected" : ""}${done ? " done" : ""}" data-id="${r.id}">
+        <span class="rank">#${i + 1}</span>
+        <span class="dot ${trackDotClass(r.track)}"></span>
+        <div class="card-body">
+          <p class="card-title">${r.title}</p>
+          <p class="card-track">${r.trackLabel}</p>
+        </div>
+        ${done ? '<span class="check">✓</span>' : ""}
+      </div>
+    `
+          })
+          .join("")
+        q.querySelectorAll(".card").forEach((el) => {
+          el.addEventListener("click", () => {
+            state.selected = el.getAttribute("data-id")
+            renderQueue()
+            renderDetail()
+          })
+        })
+      }
+
+      function renderDetail() {
+        const r = requests.find((x) => x.id === state.selected)
+        if (!r) {
+          document.getElementById("detail").innerHTML = ""
+          return
+        }
+        const done = state.resolved[r.id]
+        const canResolve =
+          !done && r.uses.staff <= state.staff && r.uses.slots <= state.slots
+        const blocked = !done && !canResolve
+
+        document.getElementById("detail").innerHTML = `
+    <span class="badge ${r.method === "rules" ? "rules" : "fallback"}">${r.method === "rules" ? "Classified by rules" : "AI fallback"}</span>
+
+    <p class="detail-label">Recommended action</p>
+    <p class="detail-text">${r.action}</p>
+
+    <p class="detail-label">Response to send</p>
+    <div class="response-box">"${r.response}"</div>
+
+    <p class="detail-label">Why this decision</p>
+    <p class="detail-text">${r.reasoning}</p>
+
+    <div class="score-row">
+      <span class="score-item">Financial risk: <b>${r.scores.financial}</b></span>
+      <span class="score-item">Reputation risk: <b>${r.scores.reputation}</b></span>
+      <span class="score-item">Complexity: <b>${r.scores.complexity}</b></span>
+      <span class="score-item">Priority: <b>${r.priority}</b></span>
+    </div>
+
+    ${blocked ? '<p class="detail-label" style="color:var(--coral); margin-top:18px;">Not enough resources available right now.</p>' : ""}
+
+    <div class="actions">
+      <button class="primary" id="resolveBtn" ${done || blocked ? "disabled" : ""}>${done ? "Resolved" : "Mark as resolved"}</button>
+    </div>
+  `
+
+        const btn = document.getElementById("resolveBtn")
+        if (btn && canResolve) {
+          btn.addEventListener("click", () => {
+            state.staff -= r.uses.staff
+            state.slots -= r.uses.slots
+            state.resolved[r.id] = true
+            state.log.unshift({
+              time: timestamp(),
+              text: `Resolved: ${r.title} (${r.trackLabel})`,
+            })
+            renderResources()
+            renderQueue()
+            renderDetail()
+            renderLog()
+          })
+        }
+      }
+
+      function renderLog() {
+        const el = document.getElementById("logList")
+        if (state.log.length === 0) {
+          el.innerHTML = '<p class="empty-log">No actions taken yet.</p>'
+          return
+        }
+        el.innerHTML = state.log
+          .map(
+            (e) =>
+              `<div class="log-entry"><span class="t">${e.time}</span><span>${e.text}</span></div>`
+          )
+          .join("")
+      }
+
+      document.getElementById("classifyBtn").addEventListener("click", () => {
+        const textEl = document.getElementById("newReqText")
+        const text = textEl.value.trim()
+        if (!text) return
+        const tags = {
+          vip: document.getElementById("tagVIP").checked,
+          money: document.getElementById("tagMoney").checked,
+          booking: document.getElementById("tagBooking").checked,
+        }
+        const result = classifyRequest(text, tags)
+        const id = "r" + nextId++
+        requests.push({
+          id,
+          title: text.length > 60 ? text.slice(0, 60) + "…" : text,
+          source: "live",
+          track: result.track,
+          trackLabel: result.trackLabel,
+          method: result.method,
+          action: result.action,
+          response: result.response,
+          reasoning: result.reasoning,
+          scores: result.scores,
+          priority: result.priority,
+          uses: result.uses,
+        })
+        state.selected = id
+        state.log.unshift({
+          time: timestamp(),
+          text: `Classified via ${result.method === "rules" ? "rules engine" : "AI fallback"}: ${text.slice(0, 40)}${text.length > 40 ? "…" : ""}`,
+        })
+        textEl.value = ""
+        document.getElementById("tagVIP").checked = false
+        document.getElementById("tagMoney").checked = false
+        document.getElementById("tagBooking").checked = false
+        renderQueue()
+        renderDetail()
+        renderLog()
+      })
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        requests = requests.filter((r) => r.source === "seed")
+        state.staff = 2
+        state.slots = 3
+        state.resolved = {}
+        state.selected = "r1"
+        state.log = []
+        renderResources()
+        renderQueue()
+        renderDetail()
+        renderLog()
+      })
+
+      renderResources()
+      renderQueue()
+      renderDetail()
+      renderLog()
+    </script>
+  </body>
+</html>
